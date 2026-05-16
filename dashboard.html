@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard — TikTok Analytics</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f5f5f7;
+            color: #1a1a1a;
+            min-height: 100vh;
+        }
+        header {
+            background: linear-gradient(90deg, #000000 0%, #25F4EE 50%, #FE2C55 100%);
+            color: white;
+            padding: 24px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        header h1 { font-size: 24px; }
+        .login-btn {
+            background: white;
+            color: #FE2C55;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .login-btn:hover { transform: translateY(-2px); transition: 0.2s; }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px;
+        }
+        .login-screen {
+            display: none;
+            text-align: center;
+            padding: 80px 20px;
+        }
+        .login-screen.active { display: block; }
+        .login-screen h2 { font-size: 32px; margin-bottom: 16px; }
+        .login-screen p { color: #666; font-size: 18px; margin-bottom: 32px; }
+        .big-login-btn {
+            background: #FE2C55;
+            color: white;
+            border: none;
+            padding: 16px 40px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 18px;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .big-login-btn:hover { background: #e02548; }
+
+        .dashboard { display: none; }
+        .dashboard.active { display: block; }
+
+        .profile-card {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #25F4EE, #FE2C55);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 32px;
+            font-weight: bold;
+        }
+        .profile-info h2 { font-size: 24px; margin-bottom: 4px; }
+        .profile-info .username { color: #666; margin-bottom: 8px; }
+        .profile-info .bio { color: #1a1a1a; font-size: 14px; }
+        .verified {
+            background: #25F4EE;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .stat-label { color: #666; font-size: 13px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-value { font-size: 32px; font-weight: bold; color: #1a1a1a; }
+        .stat-change { color: #25F4EE; font-size: 13px; margin-top: 4px; }
+
+        .videos-section {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .videos-section h3 { margin-bottom: 20px; font-size: 18px; }
+        .video-row {
+            display: grid;
+            grid-template-columns: 60px 1fr 80px 80px 80px;
+            gap: 16px;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+            align-items: center;
+        }
+        .video-row.header { font-weight: 600; color: #666; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .video-thumb {
+            width: 60px;
+            height: 80px;
+            background: linear-gradient(135deg, #25F4EE 0%, #FE2C55 100%);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+        }
+        .video-title { font-size: 14px; }
+        .video-metric { font-size: 14px; color: #1a1a1a; }
+
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .loading { animation: pulse 1.5s infinite; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>📊 TikTok Analytics</h1>
+        <button class="login-btn" id="logoutBtn" style="display:none" onclick="logout()">Logout</button>
+    </header>
+
+    <div class="container">
+        <div class="login-screen active" id="loginScreen">
+            <h2>Welcome to TikTok Analytics</h2>
+            <p>Connect your TikTok account to view performance insights</p>
+            <button class="big-login-btn" onclick="startLogin()">
+                <span>▶</span> Continue with TikTok
+            </button>
+        </div>
+
+        <div class="dashboard" id="dashboard">
+            <div class="profile-card">
+                <div class="avatar">K</div>
+                <div class="profile-info">
+                    <h2>Kirill Fesyun<span class="verified">user.info.profile</span></h2>
+                    <div class="username">@kirillfesun36</div>
+                    <div class="bio">Digital marketer | Performance ads | Content creator</div>
+                </div>
+            </div>
+
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-label">Followers · user.info.stats</div>
+                    <div class="stat-value">12,847</div>
+                    <div class="stat-change">+248 this week</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Following · user.info.stats</div>
+                    <div class="stat-value">342</div>
+                    <div class="stat-change">+5 this week</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total Likes · user.info.stats</div>
+                    <div class="stat-value">186K</div>
+                    <div class="stat-change">+3.2K this week</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Videos · user.info.stats</div>
+                    <div class="stat-value">47</div>
+                    <div class="stat-change">+2 this week</div>
+                </div>
+            </div>
+
+            <div class="videos-section">
+                <h3>📹 Recent Videos · video.list</h3>
+                <div class="video-row header">
+                    <div></div>
+                    <div>Title</div>
+                    <div>Views</div>
+                    <div>Likes</div>
+                    <div>Comments</div>
+                </div>
+                <div class="video-row">
+                    <div class="video-thumb">🎬</div>
+                    <div class="video-title">How I scaled ad campaigns 10x</div>
+                    <div class="video-metric">45,231</div>
+                    <div class="video-metric">3,847</div>
+                    <div class="video-metric">128</div>
+                </div>
+                <div class="video-row">
+                    <div class="video-thumb">🎬</div>
+                    <div class="video-title">3 secrets of high CTR creatives</div>
+                    <div class="video-metric">28,104</div>
+                    <div class="video-metric">2,156</div>
+                    <div class="video-metric">94</div>
+                </div>
+                <div class="video-row">
+                    <div class="video-thumb">🎬</div>
+                    <div class="video-title">A/B testing in 60 seconds</div>
+                    <div class="video-metric">19,872</div>
+                    <div class="video-metric">1,503</div>
+                    <div class="video-metric">67</div>
+                </div>
+                <div class="video-row">
+                    <div class="video-thumb">🎬</div>
+                    <div class="video-title">My retargeting funnel reveal</div>
+                    <div class="video-metric">15,439</div>
+                    <div class="video-metric">1,289</div>
+                    <div class="video-metric">52</div>
+                </div>
+                <div class="video-row">
+                    <div class="video-thumb">🎬</div>
+                    <div class="video-title">5 quiz hooks that convert</div>
+                    <div class="video-metric">12,847</div>
+                    <div class="video-metric">967</div>
+                    <div class="video-metric">41</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function startLogin() {
+            // Симулируем переход на TikTok OAuth
+            alert("Demo: This would redirect to TikTok OAuth authorization with Login Kit.\n\nScopes requested:\n- user.info.basic\n- user.info.profile\n- user.info.stats\n- video.list\n\nAfter user authorizes, redirected back to /callback with access token.");
+            // В реальном приложении: window.location.href = 'https://www.tiktok.com/v2/auth/authorize/...';
+            
+            // Для демо показываем дашборд
+            document.getElementById('loginScreen').classList.remove('active');
+            document.getElementById('dashboard').classList.add('active');
+            document.getElementById('logoutBtn').style.display = 'block';
+        }
+
+        function logout() {
+            document.getElementById('dashboard').classList.remove('active');
+            document.getElementById('loginScreen').classList.add('active');
+            document.getElementById('logoutBtn').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
